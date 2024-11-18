@@ -1,0 +1,39 @@
+# configs/config.yaml
+defaults:
+  - data: default
+  - model: default
+  - training: default
+  - _self_
+
+paths:
+  data_dir: ${hydra:runtime.cwd}/data
+  models_dir: ${hydra:runtime.cwd}/models
+  outputs_dir: ${hydra:runtime.cwd}/outputs
+
+mlflow:
+  tracking_uri: http://localhost:5000
+  experiment_name: default
+
+# configs/data/default.yaml
+data:
+  raw_data_path: ${paths.data_dir}/raw
+  processed_data_path: ${paths.data_dir}/processed
+  train_ratio: 0.8
+  val_ratio: 0.1
+  test_ratio: 0.1
+  random_state: 42
+
+# configs/model/default.yaml
+model:
+  name: "random_forest"
+  params:
+    n_estimators: 100
+    max_depth: 10
+    random_state: 42
+
+# configs/training/default.yaml
+training:
+  batch_size: 32
+  num_epochs: 10
+  learning_rate: 0.001
+  early_stopping_patience: 5
