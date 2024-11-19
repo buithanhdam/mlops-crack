@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 services:
   tracking_server:
     image: ghcr.io/mlflow/mlflow:latest
