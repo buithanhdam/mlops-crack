@@ -62,6 +62,15 @@ aws_secret_access_key = your-secret-key
 ```
 
 #### Create a data folder in same path of root project `./mlops-crack/data` and put your data file here
+
+## Testing
+
+### **Testing data pipeline with (ingestion and transformer)**
+
+```bash
+python3 tests/test_data.py
+```
+
 ## Security Notice
 
 - Keep your AWS credentials secure and never commit them to version control
