@@ -63,12 +63,42 @@ aws_secret_access_key = your-secret-key
 
 #### Create a data folder in same path of root project `./mlops-crack/data` and put your data file here
 
+## Configuration
+
+The project uses Hydra for configuration management. Configuration files are organized in the `configs` directory:
+
+### Config Structure
+```
+configs/
+├── config.yaml           # Main configuration file
+```
+
+### Configuration Details
+
+1. **Main Config** (`configs/config.yaml`):
+   - Defines base paths and MLflow settings
+   - Sets up default configurations
+
+2. **Data Config**:
+   - Specifies data paths and processing parameters
+   - Controls train/validation/test splits
+   - Defines data file and label column names
+
+3. **Model Config**:
+   - Sets model architecture and hyperparameters
+   - Configures random forest parameters
+
+4. **Training Config**:
+   - Defines training parameters
+   - Controls batch size, epochs, and learning rate
+   - Sets early stopping configuration
+
 ## Testing
 
 ### **Testing data pipeline with (ingestion and transformer)**
 
 ```bash
-python3 tests/test_data.py
+python3 src/pipeline/data_pipeline.py
 ```
 
 ## Security Notice
@@ -83,6 +113,7 @@ python3 tests/test_data.py
 - Git
 - AWS account with S3 access
 - Basic understanding of ML concepts
+- Hydra for configuration management
 
 ## Contact
 

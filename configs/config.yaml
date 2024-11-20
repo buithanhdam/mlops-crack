@@ -1,8 +1,5 @@
 # configs/config.yaml
 defaults:
-  - data: default
-  - model: default
-  - training: default
   - _self_
 
 paths:
@@ -14,16 +11,17 @@ mlflow:
   tracking_uri: http://localhost:5000
   experiment_name: default
 
-# configs/data/default.yaml
 data:
   raw_data_path: ${paths.data_dir}/raw
   processed_data_path: ${paths.data_dir}/processed
+  transformed_data_path: ${paths.data_dir}/transformed
+  data_file: "Iris.csv"
+  label_col: "Species"
   train_ratio: 0.8
   val_ratio: 0.1
   test_ratio: 0.1
   random_state: 42
 
-# configs/model/default.yaml
 model:
   name: "random_forest"
   params:
@@ -31,7 +29,6 @@ model:
     max_depth: 10
     random_state: 42
 
-# configs/training/default.yaml
 training:
   batch_size: 32
   num_epochs: 10
