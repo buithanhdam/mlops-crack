@@ -152,7 +152,7 @@ python3 src/pipeline/data_pipeline.py
 
 To test the training pipeline:
 
-1. Update the `configs/model/default.yaml` file to include your model and parameters. You can choose from models such as:
+1. Update the `configs/config.yaml` file set the `default_model` to include your model_name. You can choose from models such as:
    - `random_forest`
    - `svm`
    - `logistic_regression`
@@ -161,6 +161,11 @@ To test the training pipeline:
 2. Run the training pipeline:
 ```bash
 python3 src/pipeline/training_pipeline.py
+```
+
+3. Run the predict pipeline:
+```bash
+python3 src/pipeline/prediction_pipeline.py
 ```
 
 ## Security Notice
