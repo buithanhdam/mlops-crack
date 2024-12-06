@@ -118,6 +118,8 @@ class DataTransformer:
             # Lưu scaler
             joblib.dump(self.scaler, 
                        os.path.join(self.transformed_data_path, 'scaler.joblib'))
+            joblib.dump(self.label_encoder, 
+                       os.path.join(self.transformed_data_path, 'label_encoder.joblib'))
             
             logger.info("Đã lưu dữ liệu đã transform thành công")
         except Exception as e:
@@ -140,7 +142,7 @@ class DataTransformer:
             # Lưu dữ liệu đã transform
             self.save_transformed_data(
                 X_train_scaled, X_val_scaled, X_test_scaled,
-                y_train, y_val, y_test
+                y_train_scaled, y_val_scaled, y_test_scaled
             )
             logger.info("Transformation pipeline running successfully")
             return X_train_scaled, X_val_scaled, X_test_scaled, y_train_scaled, y_val_scaled, y_test_scaled

@@ -1,37 +1,25 @@
-# src/training/train.py
 import hydra
-import mlflow
 from omegaconf import DictConfig
-import logging
+from src.utils import get_logger
+from src.data import DVCRemoteManager
+from src.models import ModelTrainer
+logger = get_logger()
+manager = DVCRemoteManager()
 
-logger = logging.getLogger(__name__)
-
-@hydra.main(config_path="../../configs", config_name="config")
+@hydra.main(version_base='1.3',config_path="../../configs/", config_name="config")
 def train(config: DictConfig) -> None:
     """Train the model."""
     try:
-        mlflow.set_tracking_uri(config.mlflow.tracking_uri)
-        mlflow.set_experiment(config.mlflow.experiment_name)
+        manager.pull_from_s3()
+        manager.check_remote_status()
+        logger.info("Starting training pipeline")
+        trainer = ModelTrainer(config)
+        trainer.train()
+        model_file_path = trainer.save_model()
+        manager.add_file(model_file_path)
+        manager.push_to_s3()
         
-        with mlflow.start_run():
-            # Log configuration
-            mlflow.log_params(dict(config.model.params))
-            
-            # Load data
-            # train_data = load_data(config.data.processed_data_path)
-            
-            # Train model
-            # model = train_model(train_data, config.model.params)
-            
-            # Evaluate
-            # metrics = evaluate_model(model, test_data)
-            # mlflow.log_metrics(metrics)
-            
-            # Save model
-            # mlflow.sklearn.log_model(model, "model")
-            
-            logger.info("Training completed successfully")
-            
+        logger.info("Training completed successfully")
     except Exception as e:
         logger.error(f"Error during training: {str(e)}")
         raise e

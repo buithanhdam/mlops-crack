@@ -1,0 +1,28 @@
+defaults:
+  - _self_
+
+random_forest:
+  model: sklearn.ensemble.RandomForestClassifier
+  params:
+    n_estimators: 100
+    max_depth: 10
+    random_state: 42
+
+svm:
+  model: sklearn.svm.SVC
+  params:
+    C: 1.0
+    kernel: 'rbf'
+    random_state: 42
+
+knn:
+  model: sklearn.neighbors.KNeighborsClassifier
+  params:
+    n_neighbors: 5
+    metric: 'euclidean'
+
+logistic_regression:
+  model: sklearn.linear_model.LogisticRegression
+  params:
+    C: 1.0
+    random_state: 42

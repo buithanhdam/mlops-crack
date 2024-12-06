@@ -1,0 +1,7 @@
+defaults:
+  - _self_
+
+batch_size: 32
+num_epochs: 10
+learning_rate: 0.001
+early_stopping_patience: 5

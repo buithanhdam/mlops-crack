@@ -27,7 +27,7 @@ def data_preprocessing_pipeline(config: DictConfig):
     # Chạy data ingestion
     logger.info("Starting ingestion data")
     ingestion = DataIngestion(config)
-    X_train, X_val, X_test, y_train, y_val, y_test = ingestion.run_ingestion()
+    ingestion.run_ingestion()
         
     # Track processed data với DVC
     manager.add_file('data/processed')
@@ -35,7 +35,7 @@ def data_preprocessing_pipeline(config: DictConfig):
     # Chạy data transformation
     logger.info("Starting transformer data")
     transformer = DataTransformer(config)
-    X_train_scaled, X_val_scaled, X_test_scaled, y_train_scaled, y_val_scaled, y_test_scaled = transformer.run_transformation()
+    transformer.run_transformation()
         
     # Track transformed data với DVC
     manager.add_file('data/transformed')

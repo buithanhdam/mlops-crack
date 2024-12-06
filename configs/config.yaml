@@ -1,36 +1,46 @@
-# configs/config.yaml
 defaults:
+  - data: default           # Kế thừa từ configs/data/config.yaml
+  - model: default    # Kế thừa từ configs/model/config.yaml
+  - training: default # Kế thừa từ configs/training/config.yaml
   - _self_
 
 paths:
   data_dir: ${hydra:runtime.cwd}/data
   models_dir: ${hydra:runtime.cwd}/models
   outputs_dir: ${hydra:runtime.cwd}/outputs
+  visualization_dir: ${hydra:runtime.cwd}/visualization
+  logs_dir: ${hydra:runtime.cwd}/logs
 
 mlflow:
   tracking_uri: http://localhost:5000
   experiment_name: default
 
-data:
-  raw_data_path: ${paths.data_dir}/raw
-  processed_data_path: ${paths.data_dir}/processed
-  transformed_data_path: ${paths.data_dir}/transformed
-  data_file: "Iris.csv"
-  label_col: "Species"
-  train_ratio: 0.8
-  val_ratio: 0.1
-  test_ratio: 0.1
-  random_state: 42
+default_model: random_forest
 
-model:
-  name: "random_forest"
-  params:
-    n_estimators: 100
-    max_depth: 10
-    random_state: 42
+## Setup logs
+hydra:
+  run:
+    dir: ${paths.logs_dir}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: ${paths.logs_dir}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  job:
+    name: "hydra_logging"
+  verbose: false
 
-training:
-  batch_size: 32
-  num_epochs: 10
-  learning_rate: 0.001
-  early_stopping_patience: 5
+log:
+  root:
+    handlers: ["file", "console"]
+    level: INFO
+  handlers:
+    file:
+      class: logging.FileHandler
+      filename: ${hydra.job.name}.log
+      formatter: simple
+      directory: ${paths.logs_dir}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    console:
+      class: logging.StreamHandler
+      formatter: simple
+  formatters:
+    simple:
+      format: "[%(asctime)s] %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
