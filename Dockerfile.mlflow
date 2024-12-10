@@ -1,0 +1,12 @@
+# Use the official MLflow image as the base
+FROM ghcr.io/mlflow/mlflow:v2.12.1
+
+WORKDIR /app
+
+RUN pip install pymysql cryptography
+
+EXPOSE 5000
+
+COPY .env ./
+
+CMD ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000"]

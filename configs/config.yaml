@@ -5,11 +5,11 @@ defaults:
   - _self_
 
 paths:
-  data_dir: ${hydra:runtime.cwd}/data
-  models_dir: ${hydra:runtime.cwd}/models
-  outputs_dir: ${hydra:runtime.cwd}/outputs
-  visualization_dir: ${hydra:runtime.cwd}/visualization
-  logs_dir: ${hydra:runtime.cwd}/logs
+  data_dir: ${hydra.runtime.cwd}/data
+  models_dir: ${hydra.runtime.cwd}/models
+  outputs_dir: ${hydra.runtime.cwd}/outputs
+  visualization_dir: ${hydra.runtime.cwd}/visualization
+  logs_dir: ${hydra.runtime.cwd}/logs
 
 mlflow:
   tracking_uri: http://localhost:5000

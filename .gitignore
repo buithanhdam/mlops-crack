@@ -164,3 +164,5 @@ logs
 .aws
 /outputs
 /visualization
+/mlflow
+/mysql_data

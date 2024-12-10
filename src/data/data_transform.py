@@ -1,4 +1,5 @@
 # src/data/data_transform.py
+import mlflow
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import os
@@ -127,25 +128,30 @@ class DataTransformer:
             raise
 
     def run_transformation(self):
-        """Chạy toàn bộ quá trình transformation"""
         try:
-            # Load dữ liệu
-            X_train, X_val, X_test, y_train, y_val, y_test = self.load_data()
-            
-            # Transform features
-            X_train_scaled, X_val_scaled, X_test_scaled = self.transform_features(
-                X_train, X_val, X_test
-            )
-            y_train_scaled, y_val_scaled, y_test_scaled = self.transform_label(
-                y_train, y_val, y_test
-            )
-            # Lưu dữ liệu đã transform
-            self.save_transformed_data(
-                X_train_scaled, X_val_scaled, X_test_scaled,
-                y_train_scaled, y_val_scaled, y_test_scaled
-            )
-            logger.info("Transformation pipeline running successfully")
-            return X_train_scaled, X_val_scaled, X_test_scaled, y_train_scaled, y_val_scaled, y_test_scaled
+            with mlflow.start_run(run_name="data_transformation",nested=True):
+                # Load dữ liệu
+                X_train, X_val, X_test, y_train, y_val, y_test = self.load_data()
+
+                # Transform features
+                X_train_scaled, X_val_scaled, X_test_scaled = self.transform_features(
+                    X_train, X_val, X_test
+                )
+                y_train_scaled, y_val_scaled, y_test_scaled = self.transform_label(
+                    y_train, y_val, y_test
+                )
+                
+                # Log scaler and label encoder
+                mlflow.log_artifact(os.path.join(self.transformed_data_path, 'scaler.joblib'), artifact_path="models")
+                mlflow.log_artifact(os.path.join(self.transformed_data_path, 'label_encoder.joblib'), artifact_path="models")
+                
+                # Lưu dữ liệu đã transform
+                self.save_transformed_data(
+                    X_train_scaled, X_val_scaled, X_test_scaled,
+                    y_train_scaled, y_val_scaled, y_test_scaled
+                )
+                logger.info("Transformation pipeline running successfully")
+                return X_train_scaled, X_val_scaled, X_test_scaled, y_train_scaled, y_val_scaled, y_test_scaled
         except Exception as e:
-            logger.error(f"Lỗi trong quá trình transformation: {e}")
+            logger.error(f"Error in data transformation: {e}")
             raise

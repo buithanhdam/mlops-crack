@@ -1,4 +1,5 @@
 # src/data/data_ingestion.py
+import mlflow
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import os
@@ -82,16 +83,23 @@ class DataIngestion:
 
     def run_ingestion(self):
         try:
-            # Đọc dữ liệu
-            df = self.read_data()
-            
-            # Phân chia dữ liệu
-            X_train, X_val, X_test, y_train, y_val, y_test = self.split_data(df)
-            
-            # Lưu dữ liệu đã phân chia
-            self.save_splits(X_train, X_val, X_test, y_train, y_val, y_test)
-            logger.info("Ingestion pipeline running successfully")
-            return X_train, X_val, X_test, y_train, y_val, y_test
+            with mlflow.start_run(run_name="data_ingestion",nested=True):
+                # Đọc dữ liệu
+                df = self.read_data()
+                mlflow.log_metric("total_rows", len(df))
+                mlflow.log_metric("total_columns", df.shape[1])
+
+                # Phân chia dữ liệu
+                X_train, X_val, X_test, y_train, y_val, y_test = self.split_data(df)
+                mlflow.log_metric("train_samples", len(X_train))
+                mlflow.log_metric("val_samples", len(X_val))
+                mlflow.log_metric("test_samples", len(X_test))
+
+                # Lưu dữ liệu đã phân chia
+                self.save_splits(X_train, X_val, X_test, y_train, y_val, y_test)
+                logger.info("Ingestion pipeline running successfully")
+                
+                return X_train, X_val, X_test, y_train, y_val, y_test
         except Exception as e:
-            logger.error(f"Lỗi trong quá trình ingestion: {e}")
+            logger.error(f"Error in data ingestion: {e}")
             raise

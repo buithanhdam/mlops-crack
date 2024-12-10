@@ -5,7 +5,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y git\
     build-essential \
     curl \
     && rm -rf /var/lib/apt/lists/*
@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
+RUN pip install uvicorn
 # Copy the rest of the application
 COPY . .
 
@@ -24,5 +24,4 @@ RUN pip install -e .
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-# Command to run tests
-CMD ["python", "-m", "pytest", "tests/"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

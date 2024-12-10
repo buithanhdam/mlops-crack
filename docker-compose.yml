@@ -1,11 +1,70 @@
-version: '3.8'
+version: '3.9'
 services:
-  tracking_server:
-    image: ghcr.io/mlflow/mlflow:latest
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ~/.aws:/app/.aws
+      - .dvc:/app/.dvc
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - ENVIRONMENT=development
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - mlops-crack
+    depends_on:
+      - mlflow
+      - mysql
+
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow
+    env_file:
+      - .env
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}
+      - MLFLOW_ARTIFACT_ROOT=/mlflow/artifacts
     ports:
       - "5000:5000"
     volumes:
-      - ./mlruns:/mlruns
+      - ./mlflow:/mlflow
+    networks:
+      - mlops-crack
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-8
+    env_file:
+      - .env
     environment:
-      - MLFLOW_TRACKING_URI=http://0.0.0.0:5000
-    command: mlflow server --host 0.0.0.0
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - mlops-crack
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+networks:
+  mlops-crack:
+    driver: bridge
+
+volumes:
+  mysql_data:
