@@ -1,31 +1,41 @@
 # MLOps Crack
+
 A comprehensive self-learning MLOps course repository with practical implementations and resources.
+
+---
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Installation](#installation)
-   - [Clone the Repository](#1-clone-the-repository)
-   - [Set Up Virtual Environment](#2-set-up-virtual-environment)
-   - [Install Dependencies](#3-install-dependencies)
-   - [Configure DVC with S3 Bucket](#4-configure-dvc-with-s3-bucket)
-3. [Configuration](#configuration)
-   - [Config Structure](#config-structure)
-   - [Configuration Details](#configuration-details)
-4. [Testing](#testing)
-   - [Testing Data Pipeline (Ingestion and Transformer)](#testing-data-pipeline-ingestion-and-transformer)
-   - [Testing Training Pipeline (Build, Train, Evaluate)](#testing-training-pipeline-build-train-evaluate)
-5. [Security Notice](#security-notice)
-6. [Prerequisites](#prerequisites)
-7. [Contact](#contact)
+1. [Overview](#overview)  
+2. [Installation](#installation)  
+   - [Clone the Repository](#1-clone-the-repository)  
+   - [Set Up Virtual Environment](#2-set-up-virtual-environment)  
+   - [Install Dependencies](#3-install-dependencies)  
+   - [Environment Configuration](#4-environment-configuration)  
+   - [Configure DVC with S3 Bucket](#5-configure-dvc-with-s3-bucket)  
+3. [Configuration](#configuration)  
+   - [Config Structure](#config-structure)  
+   - [Configuration Details](#configuration-details)  
+4. [Testing](#testing)  
+   - [Testing Data Pipeline](#testing-data-pipeline)  
+   - [Testing Training Pipeline](#testing-training-pipeline)  
+   - [Prediction Pipeline](#prediction-pipeline)  
+5. [Run with Docker](#run-with-docker)  
+   - [Build and Start Services](#build-and-start-services)  
+   - [Stop Services](#stop-services)  
+6. [Security Notice](#security-notice)  
+7. [Prerequisites](#prerequisites)  
+8. [Contact](#contact)  
+
+---
 
 ## Overview
 
-This repository provides materials and code to learn MLOps practices and tools through hands-on experience. It covers essential topics such as data pipeline, model training, and deployment using industry-standard tools and frameworks.
+This repository is a comprehensive guide to learning MLOps through hands-on practices, covering topics such as data pipeline, model training, and deployment using tools like Docker, DVC, and MLflow.
+
+---
 
 ## Installation
-
-Follow these steps to set up the project:
 
 ### **1. Clone the Repository**
 
@@ -37,8 +47,6 @@ cd mlops-crack
 ```
 
 ### **2. Set Up Virtual Environment**
-
-Set up a virtual environment to isolate dependencies for the project.
 
 #### For Unix/macOS:
 ```bash
@@ -54,135 +62,155 @@ python -m venv venv
 
 ### **3. Install Dependencies**
 
-Once the virtual environment is active, install the required dependencies:
+Install project dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### **4. Configure DVC with S3 Bucket**
+### **4. Environment Configuration**
 
-DVC (Data Version Control) is used for managing datasets and model versioning. To set it up with S3:
+Create a `.env` file from the provided template:
 
-1. **Initialize DVC**:
 ```bash
-dvc init -f
+cp .env.example .env
 ```
 
-2. **Add S3 Remote Storage**:
-```bash
-dvc remote add -d <remote-name> <s3-bucket-link>
+Edit `.env` and set your environment variables:
+
+```env
+MYSQL_DATABASE=mlops-crack
+MYSQL_USER=user
+MYSQL_PASSWORD=1
+MYSQL_ROOT_PASSWORD=1
+MYSQL_HOST=mysql
+MYSQL_PORT=3306
+
+AWS_ACCESS_KEY_ID=<your-aws-access-key-id>
+AWS_SECRET_ACCESS_KEY=<your-aws-secret-access-key>
 ```
 
-3. **Set up AWS Credentials**:
-   - Create a directory for AWS credentials:
+### **5. Configure DVC with S3 Bucket**
+
+1. Initialize DVC:
+```bash
+dvc init
+```
+
+2. Add S3 as the remote storage:
+```bash
+dvc remote add -d s3remote s3://your-bucket-name
+```
+
+3. Configure AWS credentials:
+   - Create a `.aws/credentials` file:
 ```bash
 mkdir .aws
 touch .aws/credentials
 ```
 
-   - Add your AWS credentials to the `.aws/credentials` file:
+   - Add your AWS credentials:
 ```ini
 [default]
-aws_access_key_id = your-access-key
-aws_secret_access_key = your-secret-key
+aws_access_key_id = <your-access-key>
+aws_secret_access_key = <your-secret-key>
 ```
 
-4. **Create a data folder**:
-   Create the necessary directories to store your data:
+4. Create the `data/raw` directory for datasets:
 ```bash
-mkdir data
-cd data
-mkdir raw
+mkdir -p data/raw
 ```
 
-   Then, place your data files in the `raw` directory.
+Place your raw datasets in the `data/raw` folder.
+
+---
 
 ## Configuration
 
-The project uses **Hydra** for configuration management. Configuration files are organized in the `configs` directory.
-
-### Config Structure
+### **Config Structure**
 
 ```bash
 configs/
-├── config.yaml           # Main configuration file
-├── data/
-│   └── default.yaml      # Data processing settings
-├── model/
-│   └── default.yaml      # Model configuration
-└── training/
-    └── default.yaml      # Training parameters
+├── config.yaml           # Main config
+├── data/default.yaml     # Data settings
+├── model/default.yaml    # Model parameters
+└── training/default.yaml # Training parameters
 ```
 
-### Configuration Details
+### **Configuration Details**
 
-1. **Main Config** (`configs/config.yaml`):
-   - Defines base paths, MLflow settings, and default configurations.
+- **Main Config**: General project settings, including paths and MLflow configurations.  
+- **Data Config**: Controls dataset paths, column names, and split ratios.  
+- **Model Config**: Specifies architecture and hyperparameters.  
+- **Training Config**: Defines batch size, epochs, learning rate, etc.
 
-2. **Data Config** (`configs/data/default.yaml`):
-   - Specifies paths and processing parameters for data.
-   - Controls train/validation/test splits.
-   - Defines data file and label column names.
-
-3. **Model Config** (`configs/model/default.yaml`):
-   - Contains settings for model architecture and hyperparameters.
-   - Configures model-specific parameters (e.g., Random Forest).
-
-4. **Training Config** (`configs/training/default.yaml`):
-   - Defines training parameters such as batch size, epochs, and learning rate.
-   - Includes early stopping configuration.
+---
 
 ## Testing
 
-### **Testing Data Pipeline (Ingestion and Transformer)**
+### **Testing Data Pipeline**
 
-To test the data pipeline:
-
-1. Update the `configs/data/default.yaml` file:
-   - Set the `data_file` to the name of your data file (e.g., `Iris.csv`).
-   - Set the `label_col` to the column name of the target label (e.g., `Species`).
-   
+1. Update `configs/data/default.yaml` with your dataset file and label column.
 2. Run the data pipeline:
 ```bash
 python3 src/pipeline/data_pipeline.py
 ```
 
-### **Testing Training Pipeline (Build, Train, Evaluate)**
+### **Testing Training Pipeline**
 
-To test the training pipeline:
-
-1. Update the `configs/config.yaml` file set the `default_model` to include your model_name. You can choose from models such as:
-   - `random_forest`
-   - `svm`
-   - `logistic_regression`
-   - `knn`
-
+1. Update `configs/model/default.yaml` with the model of your choice (e.g., `random_forest`, `svm`).
 2. Run the training pipeline:
 ```bash
 python3 src/pipeline/training_pipeline.py
 ```
 
-3. Run the predict pipeline:
+### **Prediction Pipeline**
+
+Test the prediction process:
 ```bash
 python3 src/pipeline/prediction_pipeline.py
 ```
 
+---
+
+## Run with Docker
+
+### **Build and Start Services**
+
+Build and start the services:
+```bash
+docker-compose up --build
+```
+
+Access services:
+- **FastAPI**: `http://localhost:8000`  
+- **MLflow**: `http://localhost:5000`  
+
+### **Stop Services**
+
+Stop all running containers:
+```bash
+docker-compose down
+```
+
+---
+
 ## Security Notice
 
-- **AWS credentials**: Ensure your AWS credentials are secure. Never commit them to version control.
-- Add `.aws/` to your `.gitignore` file to prevent AWS credentials from being tracked by Git.
-- Use **environment variables** or **AWS IAM roles** for credentials in production environments.
+- **Never commit credentials**: Use `.env` and `.aws` for sensitive information.
+- Add `.env` and `.aws/` to `.gitignore`.
+
+---
 
 ## Prerequisites
 
-Before starting, ensure you have the following installed:
+- Python 3.9+  
+- Docker and Docker Compose  
+- AWS account with S3 access  
+- Basic understanding of ML concepts  
 
-- Python 3.9 or higher
-- Git
-- An AWS account with S3 access
-- Basic understanding of machine learning concepts
-- Hydra for configuration management
+---
 
 ## Contact
-For questions or support, please open an issue on the [GitHub repository](https://github.com/buithanhdam/mlops-crack/issues).
+
+For support, open an issue on the [GitHub repository](https://github.com/buithanhdam/mlops-crack/issues).

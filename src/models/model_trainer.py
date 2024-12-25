@@ -2,6 +2,7 @@ import os
 import pickle
 import hydra
 import joblib
+import mlflow
 import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from omegaconf import DictConfig
@@ -41,11 +42,18 @@ class ModelTrainer:
             
             # Load scaler
             self.scaler = joblib.load(os.path.join(self.transformed_data_path, 'scaler.joblib'))
-
+            mlflow.log_params({
+                    "train_samples": len(X_train),
+                    "val_samples": len(X_val),
+                    "test_samples": len(X_test),
+                    "n_features": X_train.shape[1],
+                    "feature_names": list(X_train.columns)
+                })
             logger.info("Đã load dữ liệu Train và Test đã transform thành công")
             return X_train, X_val, X_test, y_train, y_val, y_test
         except Exception as e:
             logger.error(f"Lỗi khi load dữ liệu đã transform: {e}")
+            mlflow.log_param("error_load_data", str(e))
             raise
     def train(self):
         try:
@@ -61,10 +69,15 @@ class ModelTrainer:
             logger.info(f"Training successfully with validation metrics: {val_metrics}")
             test_metrics = self.evaluate(X_test, y_test)
             logger.info(f"Training successfully with test metrics: {test_metrics}")
-            
+            mlflow.sklearn.log_model(
+                    self.model,
+                    "model",
+                    registered_model_name=self.config.default_model
+                )
             return train_metrics, val_metrics, test_metrics
         except Exception as e:
             logger.error(f"Lỗi trong quá trình training: {e}")
+            mlflow.log_param("error_training", str(e))
             raise
     def evaluate(self, X, y):
         y_pred = self.model.predict(X)
@@ -72,9 +85,11 @@ class ModelTrainer:
         metrics = {}
         for metric_name, metric_func in self.metrics.items():
             if metric_name in ['precision', 'recall', 'f1']:
-                metrics[metric_name] = metric_func(y, y_pred, average='macro')
+                value = metrics[metric_name] = metric_func(y, y_pred, average='macro')
             else:
-                metrics[metric_name] = metric_func(y, y_pred)
+                value = metrics[metric_name] = metric_func(y, y_pred)
+            metrics[metric_name] = value
+            mlflow.log_metric(metric_name, value)
         return metrics
     def save_model(self):
         """
@@ -83,19 +98,26 @@ class ModelTrainer:
         Returns:
         str: Path to the saved model.
         """
-        if self.model is None:
-            raise ValueError("Model has not been trained. Cannot save.")
+        try:
+            if self.model is None:
+                raise ValueError("Model has not been trained. Cannot save.")
 
-        # Tạo đường dẫn đầy đủ với tên file
-        model_file_path = os.path.join(self.model_path,"model.pkl")
+            # Tạo đường dẫn đầy đủ với tên file
+            model_file_path = os.path.join(self.model_path,"model.pkl")
 
-        # Tạo thư mục nếu chưa tồn tại
-        os.makedirs(self.model_path, exist_ok=True)
+            # Tạo thư mục nếu chưa tồn tại
+            os.makedirs(self.model_path, exist_ok=True)
 
-        with open(model_file_path, "wb") as f:
-            pickle.dump(self.model, f)
-        logger.info(f"Model saved successfully at {model_file_path}")
-        return model_file_path
+            with open(model_file_path, "wb") as f:
+                pickle.dump(self.model, f)
+            logger.info(f"Model saved successfully at {model_file_path}")
+            mlflow.log_param("model_save_path", model_file_path)
+            mlflow.log_artifact(model_file_path, "models")
+            return model_file_path
+        except Exception as e:
+            logger.error(f"Error saving model: {e}")
+            mlflow.log_param("error_save_model", str(e))
+            raise
     def _build_model(self):
         """
         Build the model based on the configuration.
@@ -110,6 +132,11 @@ class ModelTrainer:
 
         model_class = hydra.utils.get_class(model_params[model_name]["class"])
         model_args = model_params[model_name]["params"]
+        mlflow.log_params({
+                    "model_name": model_name,
+                    "model_class": model_params[model_name]["class"],
+                    **model_args  # Log individual model parameters
+                })
 
         return model_class(**model_args)
 
